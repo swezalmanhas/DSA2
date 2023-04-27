@@ -1,0 +1,78 @@
+#include <iostream>
+#include <vector>
+#include <climits>
+using namespace std;
+
+class Node {
+public:
+    int key;
+    Node* left;
+    Node* right;
+    Node(int key) {
+        this->key = key;
+        left = right = nullptr;
+    }
+};
+
+Node* constructTree(const vector<int>& keys,vector<vector<double> >& cost) {
+    int n = keys.size();
+    vector<vector<Node*> > root(n, vector<Node*>(n));
+    for (int i = 0; i < n; i++) {
+        root[i][i] = new Node(keys[i]);
+    }
+    for (int len = 2; len <= n; len++) {
+        for (int i = 0; i <= n - len; i++) {
+            int j = i + len - 1;
+            double minCost = INT_MAX;
+            for (int k = i; k <= j; k++) {
+                double leftCost = (k == i) ? 0 : cost[i][k - 1];
+                double rightCost = (k == j) ? 0 : cost[k + 1][j];
+                double currCost = leftCost + rightCost;
+                if (currCost < minCost) {
+                    minCost = currCost;
+                    root[i][j] = new Node(keys[k]);
+                    root[i][j]->left = (k == i) ? nullptr : root[i][k - 1];
+                    root[i][j]->right = (k == j) ? nullptr : root[k + 1][j];
+                }
+            }
+            cost[i][j] = minCost;
+        }
+    }
+    return root[0][n - 1];
+}
+
+void displayTree(Node* root, int space = 0, int height = 10) {
+    if (root == nullptr) return;
+    space += height;
+    displayTree(root->right, space, height);
+    cout << endl;
+    for (int i = height; i < space; i++) cout << " ";
+    cout << root->key << endl;
+    displayTree(root->left, space, height);
+}
+
+int main() {
+    vector<int> keys = {10, 20, 30, 40};
+    vector<double> freq = {4,2,6,3};
+    int n = keys.size();
+    vector<vector<double> > cost(n, vector<double>(n));
+    for (int i = 0; i < n; i++) {
+        cost[i][i] = freq[i];
+    }
+    for (int len = 2; len <= n; len++) {
+        for (int i = 0; i <= n - len; i++) {
+            int j = i + len - 1;
+            double sum = 0;
+            for (int k = i; k <= j; k++) {
+                sum += freq[k];
+            }
+            for (int k = i; k <= j; k++) {
+                cost[i][j] = min(cost[i][j], sum + ((k == i) ? 0 : cost[i][k - 1]) + ((k == j) ? 0 : cost[k + 1][j]));
+            }
+        }
+    }
+    Node* root = constructTree(keys, cost);
+    cout << "Optimal Binary Search Tree:\n\n";
+    displayTree(root);
+    return 0;
+}
